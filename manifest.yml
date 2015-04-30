@@ -1,0 +1,2 @@
+---
+command: gunicorn certinator:app --logfile=-
