@@ -3,8 +3,9 @@ from OpenSSL import crypto
 from Crypto.Util import asn1
 import sys
 import logging
-import os
-from flask import Flask
+import requests
+from flask import Flask, request
+import re
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -78,6 +79,32 @@ def get_certs_from_file(file_name):
 app = Flask(__name__)
 
 
+@app.route('/domain/<domain_name>', methods=['POST'])
+def analyze_domain_name(domain_name):
+    result = '\n'.join([
+        cert.digest('sha1')
+        for cert
+        in get_certs_from_domain(domain_name)
+    ]) + '\n'
+    logging.info('query for %s yielded: \n%s' % (domain_name, result))
+    return result
+
+
+regex = re.compile('analyze.html\?d=(?P<domain>[^\"]+)')
+
+
+@app.route('/find-domain-names-from-url/', methods=['POST'])
+def find_domain_names_in_url():
+    url = request.data
+    response = requests.get(url).text
+    for domain in regex.findall(response):
+        try:
+            analyze_domain_name(domain)
+        except:
+            pass
+    return 200
+
+
 @app.route('/')
 def hello():
-    return '\n'.join([cert.digest('sha1') for cert in get_certs_from_domain('www.google.com')])
+    return 'post to /domain/MY.DOMAIN.NAME\n'
