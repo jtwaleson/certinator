@@ -1,5 +1,4 @@
 Flask==0.10.1
 Flask-HTTPAuth==2.4.0
-gunicorn==19.3.0
 pyOpenSSL==0.14
 pyasn1==0.1.7
