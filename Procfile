@@ -1,1 +1,1 @@
-web: python certinator.py
+web: gunicorn certinator:app

@@ -2,3 +2,7 @@ Flask==0.10.1
 Flask-HTTPAuth==2.4.0
 pyOpenSSL==0.14
 pyasn1==0.1.7
+pycrypto==2.6.1
+cffi
+cryptography
+gunicorn==19.3.0
