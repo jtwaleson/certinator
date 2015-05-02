@@ -37,7 +37,13 @@ def store(cert):
     )
     certificate_key.content_type = 'application/x-pem-file'
     certificate_key.set_metadata(
-        'Cache-Control', 'max-age=%d, public' % (3600 * 24 * 365 * 10)
+        'Cache-Control', 'max-age=%d, public' % (3600 * 24 * 365 * 10),
+    )
+    certificate_key.set_metadata(
+        'X-Subject-Hash', str(subject_hash),
+    )
+    certificate_key.set_metadata(
+        'X-Subject-Name', certificate_operations.get_subject_string(cert),
     )
     certificate_key.set_contents_from_string(pem, replace=True)
     bucket.new_key(
