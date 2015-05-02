@@ -25,6 +25,8 @@ def _get_db_connection():
 
 
 def store(cert):
+    '''returns if certificate was actually added'''
+
     fingerprint = cert.digest('sha1').strip()
     subject_hash = cert.subject_name_hash()
     pem = certificate_operations.get_pem_string_from_cert(cert)
@@ -32,28 +34,43 @@ def store(cert):
     conn = _get_db_connection()
 
     with conn.cursor() as cursor:
-        logging.debug('going to insert %s', subject_hash)
+        logging.debug('attempting to insert %s', fingerprint)
         try:
             cursor.execute(
-                "INSERT INTO certificates (fingerprint, pem, subject_hash) "
-                "VALUES (%s, %s, %s);",
+                "INSERT INTO certificates "
+                "(fingerprint, pem, subject_hash, first_seen) "
+                "VALUES (%s, %s, %s, now());",
                 (fingerprint, pem, subject_hash),
             )
+            return True
         except psycopg2.IntegrityError:
-            pass
+            return False
 
 
-def get_subject_string(cert):
-    return ', '.join('%s=%s' % (x, y) for x, y in cert.get_subject().get_components())
+def _get_certs(query, params):
+    conn = _get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute(query, params)
+        for record in cursor:
+            yield certificate_operations.get_cert_from_pem_string(record[0])
 
 
 def get_by_subject(subject):
     subject_hash = subject.hash()
-    conn = _get_db_connection()
-    with conn.cursor() as cursor:
-        cursor.execute(
-            "SELECT pem FROM certificates WHERE subject_hash = '%s';"
-            % subject_hash
-        )
-        for record in cursor:
-            yield certificate_operations.get_cert_from_pem_string(record[0])
+    for cert in _get_certs(
+        "SELECT pem "
+        "FROM certificates "
+        "WHERE subject_hash = '%s';",
+        (subject_hash,)
+    ):
+        yield cert
+
+
+def get_most_recent_certificates(limit):
+    for cert in _get_certs(
+        "SELECT pem FROM certificates "
+        "ORDER BY first_seen DESC "
+        "LIMIT %s;",
+        (limit,)
+    ):
+        yield cert
