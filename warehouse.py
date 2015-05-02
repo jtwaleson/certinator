@@ -1,6 +1,8 @@
 import boto
 import logging
 import os
+import redis
+import json
 
 import certificate_operations
 
@@ -19,7 +21,22 @@ def _get_bucket():
     return _bucket
 
 
-_get_bucket()
+_redis = None
+
+
+def _get_redis():
+    global _redis
+    if not _redis:
+        logging.info('Connecting to redis')
+        credentials = json.loads(
+            os.environ['VCAP_SERVICES']
+        )['rediscloud'][0]['credentials']
+        _redis = redis.Redis(
+            host=credentials['hostname'],
+            port=int(credentials['port']),
+            password=credentials['password'],
+        )
+    return _redis
 
 
 def store(cert):
@@ -46,6 +63,7 @@ def store(cert):
     bucket.new_key(
         'subjects/%s/%s' % (subject_hash, fingerprint)
     ).set_contents_from_string('')
+    _get_redis().setex(fingerprint, pem, 60 * 30)
     return True
 
 
@@ -63,3 +81,11 @@ def get_by_subject(subject):
     print('getting list %s' % subject_hash)
     for key in bucket.list(prefix='subjects/%s' % subject_hash):
         yield get_by_fingerprint(key.name.split('/')[2])
+
+
+def was_domain_checked_recently(domain, port):
+    return _get_redis().exists('%s:%d' % (domain, port))
+
+
+def access_domain(domain, port):
+    return _get_redis().setex('%s:%d' % (domain, port), '', 60 * 10)

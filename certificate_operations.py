@@ -27,6 +27,9 @@ def get_cert_from_pem_string(input_string):
 
 
 def get_certs_from_domain(domain, port):
+    if warehouse.was_domain_checked_recently(domain, port):
+        raise Exception('domain was already scanned recently, try again later')
+
     process = subprocess.Popen([
         'timeout', '5',
         'openssl', 's_client',
@@ -36,10 +39,12 @@ def get_certs_from_domain(domain, port):
     ], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = process.communicate(b'')
     if process.returncode != 0:
-        raise Exception('Could not get certificates from domain')
+        raise Exception('Could not connect to %s:%d' % (domain, port))
 
     for cert_string in get_pem_strings_from_lines(out.decode().split('\n')):
         yield get_cert_from_pem_string(cert_string)
+
+    warehouse.access_domain(domain, port)
 
 
 def certificate_is_signed_by_authority(certificate, authority):

@@ -1,11 +1,7 @@
 * make web interface
 * write decent README
-* rebase mendix author commits
 * caching layer in redis for certificate addition/removal
-* create clean module structure
-* queue in redis for domain analysis
 * create post handler for pem text
 * create post handler for file upload (pem)
 * create post handler for file upload (der)
 * create post handler for file upload (zip)
-* keep track of domains that have been scanned in redis

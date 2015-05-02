@@ -41,8 +41,8 @@ def analyze_domain_name(domain, port=443):
         for cert in certificate_operations.get_certs_from_domain(domain, port):
             if warehouse.store(cert):
                 added += 1
-    except:
+    except Exception as e:
         logging.exception('Could not handle %s:%d' % (domain, port))
-        return 'Could not get certificates from domain', 500
+        return str(e), 500
 
     return 'domain checked, thanks for submitting %d new certificates' % added
