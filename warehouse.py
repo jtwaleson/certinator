@@ -1,27 +1,25 @@
-import psycopg2
+import boto
 import logging
-import urlparse
 import os
 
 import certificate_operations
 
-_database_url = urlparse.urlparse(os.getenv('DATABASE_URL'))
-_connection = None
+_bucket = None
 
 
-def _get_db_connection():
-    global _connection
-    if not _connection:
+def _get_bucket():
+    global _bucket
+    if not _bucket:
         logging.info('Connecting to database')
-        _connection = psycopg2.connect(
-            database=_database_url.path[1:],
-            user=_database_url.username,
-            password=_database_url.password,
-            host=_database_url.hostname,
-            port=_database_url.port
+        connection = boto.connect_s3(
+            aws_access_key_id=os.environ['S3_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['S3_SECRET_ACCESS_KEY'],
         )
-        _connection.autocommit = True
-    return _connection
+        _bucket = connection.get_bucket('all-certificates')
+    return _bucket
+
+
+_get_bucket()
 
 
 def store(cert):
@@ -31,46 +29,33 @@ def store(cert):
     subject_hash = cert.subject_name_hash()
     pem = certificate_operations.get_pem_string_from_cert(cert)
 
-    conn = _get_db_connection()
+    bucket = _get_bucket()
+    if bucket.get_key('certs/%s' % fingerprint):
+        return False
+    certificate_key = bucket.new_key(
+        'certs/%s' % fingerprint
+    )
+    certificate_key.content_type = 'application/x-pem-file'
+    certificate_key.set_metadata(
+        'Cache-Control', 'max-age=%d, public' % (3600 * 24 * 365 * 10)
+    )
+    certificate_key.set_contents_from_string(pem, replace=True)
+    bucket.new_key(
+        'subjects/%s/%s' % (subject_hash, fingerprint)
+    ).set_contents_from_string('')
+    return True
 
-    with conn.cursor() as cursor:
-        logging.debug('attempting to insert %s', fingerprint)
-        try:
-            cursor.execute(
-                "INSERT INTO certificates "
-                "(fingerprint, pem, subject_hash, first_seen) "
-                "VALUES (%s, %s, %s, now());",
-                (fingerprint, pem, subject_hash),
-            )
-            return True
-        except psycopg2.IntegrityError:
-            return False
 
-
-def _get_certs(query, params):
-    conn = _get_db_connection()
-    with conn.cursor() as cursor:
-        cursor.execute(query, params)
-        for record in cursor:
-            yield certificate_operations.get_cert_from_pem_string(record[0])
+def get_by_fingerprint(fingerprint):
+    bucket = _get_bucket()
+    contents = bucket.get_key('certs/%s' % fingerprint).get_contents_as_string()
+    return certificate_operations.get_cert_from_pem_string(contents)
 
 
 def get_by_subject(subject):
     subject_hash = subject.hash()
-    for cert in _get_certs(
-        "SELECT pem "
-        "FROM certificates "
-        "WHERE subject_hash = '%s';",
-        (subject_hash,)
-    ):
-        yield cert
+    bucket = _get_bucket()
 
-
-def get_most_recent_certificates(limit):
-    for cert in _get_certs(
-        "SELECT pem FROM certificates "
-        "ORDER BY first_seen DESC "
-        "LIMIT %s;",
-        (limit,)
-    ):
-        yield cert
+    print('getting list %s' % subject_hash)
+    for key in bucket.list(prefix='subjects/%s' % subject_hash):
+        yield get_by_fingerprint(key.name.split('/')[2])

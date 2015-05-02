@@ -42,7 +42,7 @@ def analyze_domain_name(domain, port=443):
             if warehouse.store(cert):
                 added += 1
     except:
-        logging.exception('dsads')
+        logging.exception('Could not handle %s:%d' % (domain, port))
         return 'Could not get certificates from domain', 500
 
     return 'domain checked, thanks for submitting %d new certificates' % added
