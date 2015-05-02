@@ -25,7 +25,7 @@ _get_bucket()
 def store(cert):
     '''returns if certificate was actually added'''
 
-    fingerprint = cert.digest('sha1').strip()
+    fingerprint = cert.digest('sha1').strip().replace(':', '')
     subject_hash = cert.subject_name_hash()
     pem = certificate_operations.get_pem_string_from_cert(cert)
 
@@ -53,6 +53,7 @@ def store(cert):
 
 
 def get_by_fingerprint(fingerprint):
+    fingerprint = fingerprint.replace(':', '')
     bucket = _get_bucket()
     contents = bucket.get_key('certs/%s' % fingerprint).get_contents_as_string()
     return certificate_operations.get_cert_from_pem_string(contents)
