@@ -42,9 +42,6 @@ def store(cert):
     certificate_key.set_metadata(
         'X-Subject-Hash', str(subject_hash),
     )
-    certificate_key.set_metadata(
-        'X-Subject-Name', certificate_operations.get_subject_string(cert),
-    )
     certificate_key.set_contents_from_string(pem, replace=True)
     bucket.new_key(
         'subjects/%s/%s' % (subject_hash, fingerprint)
