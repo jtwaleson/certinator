@@ -7,7 +7,7 @@ import urllib
 import random
 import logging
 import requests
-from flask import Flask, request
+from flask import Flask
 import re
 import os
 import psycopg2
@@ -173,7 +173,7 @@ regex = re.compile('analyze.html\?d=(?P<domain>[^\"]+)')
 
 @app.route('/process-local-certs/', methods=['POST'])
 def process_local_certs():
-    gevent.spawn(get_certs_from_file, '/etc/ssl/certs/ca-certificates.crt')
+    get_certs_from_file('/etc/ssl/certs/ca-certificates.crt')
     return 'Done!'
 
 
@@ -181,7 +181,17 @@ def process_local_certs():
 def list_all_certs():
     conn = get_database_connection.next()
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM certificates;")
+        cursor.execute("SELECT pem FROM certificates;")
+        for record in cursor:
+            logging.info(record)
+    return 'Listing in log!'
+
+
+@app.route('/certs')
+def list_all_certs():
+    conn = get_database_connection.next()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT pem FROM certificates;")
         for record in cursor:
             logging.info(record)
     return 'Listing in log!'
