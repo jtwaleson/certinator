@@ -51,6 +51,7 @@ def store(cert):
 
     bucket = _get_bucket()
     if bucket.get_key('certs/%s' % fingerprint):
+        _get_redis().setex(fingerprint, '', 60 * 30)
         return False
 
     certificate_key = bucket.new_key(
@@ -67,7 +68,7 @@ def store(cert):
     bucket.new_key(
         'subjects/%s/%s' % (subject_hash, fingerprint)
     ).set_contents_from_string('')
-    _get_redis().setex(fingerprint, pem, 60 * 30)
+    _get_redis().setex(fingerprint, '', 60 * 30)
     return True
 
 
