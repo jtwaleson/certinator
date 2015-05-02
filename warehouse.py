@@ -46,9 +46,13 @@ def store(cert):
     subject_hash = cert.subject_name_hash()
     pem = certificate_operations.get_pem_string_from_cert(cert)
 
+    if _get_redis().exists(fingerprint):
+        return False
+
     bucket = _get_bucket()
     if bucket.get_key('certs/%s' % fingerprint):
         return False
+
     certificate_key = bucket.new_key(
         'certs/%s' % fingerprint
     )
