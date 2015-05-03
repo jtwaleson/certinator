@@ -4,7 +4,7 @@ import logging
 from flask import Flask, Response, request
 from util import is_valid_hostname_and_port
 import warehouse
-import certificate_operations
+import x509_util
 
 
 logging.basicConfig(
@@ -70,7 +70,7 @@ def analyze_domain_name(domain, port=443):
 
     added = 0
     try:
-        for cert in certificate_operations.get_certs_from_domain(domain, port):
+        for cert in x509_util.get_certs_from_domain(domain, port):
             if warehouse.store(cert):
                 added += 1
     except Exception as e:
@@ -88,24 +88,24 @@ def get_certificates_from_request(request):
     files_count = 0
     for name, uploaded_file in request.files.iteritems():
         files_count += 1
-        pem_strings = certificate_operations.get_pem_strings_from_file_handle(
+        pem_strings = x509_util.get_pem_strings_from_file_handle(
             uploaded_file
         )
         for pem_string in pem_strings:
             yield (
                 files_count,
-                certificate_operations.get_cert_from_pem_string(pem_string),
+                x509_util.get_cert_from_pem_string(pem_string),
             )
 
     if files_count == 0:
         files_count += 1
-        pem_strings = certificate_operations.get_pem_strings_from_lines(
+        pem_strings = x509_util.get_pem_strings_from_lines(
             request.data.split('\n')
         )
         for pem_string in pem_strings:
             yield (
                 files_count,
-                certificate_operations.get_cert_from_pem_string(pem_string),
+                x509_util.get_cert_from_pem_string(pem_string),
             )
 
 
@@ -137,7 +137,7 @@ def get_chain():
     def response_generator(cert):
         previous_cert = None
         # we don't output the last cert from the chain, that is self-signed
-        for chain_cert in certificate_operations.get_certificate_chain(cert):
+        for chain_cert in x509_util.get_certificate_chain(cert):
             if previous_cert:
                 yield previous_cert
             previous_cert = chain_cert.get_pem()

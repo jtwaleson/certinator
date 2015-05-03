@@ -4,7 +4,7 @@ import os
 import redis
 import json
 
-import certificate_operations
+import x509_util
 
 logging.getLogger('boto').setLevel(logging.WARNING)
 
@@ -89,7 +89,7 @@ def get_by_fingerprint(fingerprint):
     if key is None:
         return None
     else:
-        return certificate_operations.get_cert_from_pem_string(
+        return x509_util.get_cert_from_pem_string(
             key.get_contents_as_string()
         )
 
@@ -119,6 +119,6 @@ def get_last_scanned_domains():
 
 def get_last_added_certificates():
     return map(
-        certificate_operations.get_cert_from_pem_string,
+        x509_util.get_cert_from_pem_string,
         _get_redis().lrange('last-certificates', 0, 10),
     )
