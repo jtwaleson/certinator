@@ -56,7 +56,7 @@ def get_signers(fingerprint):
     if len(signers) == 0:
         return 'no signers found', 404
     else:
-        return '\n'.join(x.get_fingerprint() for x in signers)
+        return '\n'.join(x.get_fingerprint() for x in signers) + '\n'
 
 
 @app.route('/check-domain/<domain>', methods=['POST'])
