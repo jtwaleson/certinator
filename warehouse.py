@@ -43,17 +43,16 @@ def _get_redis():
 
 def store_most_recently_added_certificates(cert):
     redis = _get_redis()
-    pem = certificate_operations.get_pem_string_from_cert(cert)
-    redis.lpush('last-certificates', pem)
+    redis.lpush('last-certificates', cert.get_pem())
     redis.ltrim('last-certificates', 0, 10)
 
 
 def store(cert):
     '''returns if certificate was actually added'''
 
-    fingerprint = cert.digest('sha1').strip().replace(':', '')
+    fingerprint = cert.get_fingerprint()
     subject_hash = cert.subject_name_hash()
-    pem = certificate_operations.get_pem_string_from_cert(cert)
+    pem = cert.get_pem()
 
     if _get_redis().exists(fingerprint):
         return False
@@ -123,6 +122,3 @@ def get_last_added_certificates():
         certificate_operations.get_cert_from_pem_string,
         _get_redis().lrange('last-certificates', 0, 10),
     )
-
-def get_last_scanned_domains():
-    return _get_redis().lrange('last-domains', 0, 10)

@@ -23,7 +23,7 @@ def index():
         for domain in warehouse.get_last_scanned_domains():
             yield domain.strip() + '\n'
         for cert in warehouse.get_last_added_certificates():
-            yield certificate_operations.get_subject_string(cert) + '\n'
+            yield cert.get_subject_string(cert) + '\n'
     return Response(gen())
 
 
@@ -39,7 +39,24 @@ def get_certificate(fingerprint):
     if cert is None:
         return 'not found', 404
     else:
-        return certificate_operations.get_pem_string_from_cert(cert)
+        return cert.get_pem()
+
+
+@app.route('/signers/<fingerprint>')
+def get_signers(fingerprint):
+    fingerprint = fingerprint.upper().replace(':', '')
+    if not fingerprint_regex.match(fingerprint):
+        return 'not a valid certificate fingerprint', 400
+    cert = warehouse.get_by_fingerprint(fingerprint)
+    if cert is None:
+        return 'not found', 404
+    if cert.is_self_signed():
+        return 'certificate is self-signed', 409
+    signers = list(cert.get_signers())
+    if len(signers) == 0:
+        return 'no signers found', 404
+    else:
+        return '\n'.join(x.get_fingerprint() for x in signers)
 
 
 @app.route('/check-domain/<domain>', methods=['POST'])
@@ -110,9 +127,7 @@ def upload_certificates():
 def get_chain():
     likely_certificate = None
     for file_no, cert in get_certificates_from_request(request):
-        if not certificate_operations.certificate_is_signed_by_authority(
-            cert, cert
-        ):
+        if not cert.is_self_signed():
             likely_certificate = cert
             break
 
@@ -125,8 +140,6 @@ def get_chain():
         for chain_cert in certificate_operations.get_certificate_chain(cert):
             if previous_cert:
                 yield previous_cert
-            previous_cert = certificate_operations.get_pem_string_from_cert(
-                chain_cert
-            )
+            previous_cert = chain_cert.get_pem()
 
     return Response(response_generator(likely_certificate))
