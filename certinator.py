@@ -23,7 +23,7 @@ def index():
         for domain in warehouse.get_last_scanned_domains():
             yield domain.strip() + '\n'
         for cert in warehouse.get_last_added_certificates():
-            yield cert.get_subject_string(cert) + '\n'
+            yield cert.get_subject_string() + '\n'
     return Response(gen())
 
 
