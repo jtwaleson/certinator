@@ -1,6 +1,6 @@
 import sys
 import logging
-from flask import Flask, Response
+from flask import Flask, Response, request
 from util import is_valid_hostname_and_port
 import warehouse
 import certificate_operations
@@ -46,3 +46,18 @@ def analyze_domain_name(domain, port=443):
         return str(e), 500
 
     return 'domain checked, thanks for submitting %d new certificates' % added
+
+
+@app.route('/upload', methods=['POST'])
+def upload_certificates():
+    files_count = 0
+    cert_count = 0
+    for name, uploaded_file in request.files.iteritems():
+        files_count += 1
+        for pem_string in certificate_operations.get_pem_strings_from_file_handle(uploaded_file):
+            logging.info('parsed certificates')
+            cert = certificate_operations.get_cert_from_pem_string(pem_string)
+            if warehouse.store(cert):
+                cert_count += 1
+
+    return 'uploaded %d files, resulting in %d new certificates' % (files_count, cert_count)

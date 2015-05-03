@@ -5,6 +5,18 @@ from Crypto.Util import asn1
 import warehouse
 
 
+def _reader(file_handle):
+    line = None
+    while line != '':
+        line = file_handle.readline()
+        yield line
+
+
+def get_pem_strings_from_file_handle(file_handle):
+    for pem_strings in get_pem_strings_from_lines(_reader(file_handle)):
+        yield pem_strings
+
+
 def get_pem_strings_from_lines(lines):
     result = []
     for line in lines:
