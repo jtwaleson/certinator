@@ -1,4 +1,5 @@
 import sys
+import re
 import logging
 from flask import Flask, Response, request
 from util import is_valid_hostname_and_port
@@ -24,6 +25,21 @@ def index():
         for cert in warehouse.get_last_added_certificates():
             yield certificate_operations.get_subject_string(cert) + '\n'
     return Response(gen())
+
+
+fingerprint_regex = re.compile('[A-F0-9]{40}')
+
+
+@app.route('/certificate/<fingerprint>')
+def get_certificate(fingerprint):
+    fingerprint = fingerprint.upper().replace(':', '')
+    if not fingerprint_regex.match(fingerprint):
+        return 'not a valid certificate fingerprint', 400
+    cert = warehouse.get_by_fingerprint(fingerprint)
+    if cert is None:
+        return 'not found', 404
+    else:
+        return certificate_operations.get_pem_string_from_cert(cert)
 
 
 @app.route('/check-domain/<domain>', methods=['POST'])

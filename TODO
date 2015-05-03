@@ -1,7 +1,10 @@
 * make web interface
+  * for index
+  * for certificate viewer
+    * should show details
+    * should show chain(s)
+    * should show vulnerabilities in chain
+* create CSR hinter
 * write decent README
-* caching layer in redis for certificate addition/removal
-* create post handler for pem text
-* create post handler for file upload (pem)
 * create post handler for file upload (der)
 * create post handler for file upload (zip)

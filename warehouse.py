@@ -86,8 +86,13 @@ def store(cert):
 def get_by_fingerprint(fingerprint):
     fingerprint = fingerprint.replace(':', '')
     bucket = _get_bucket()
-    contents = bucket.get_key('certs/%s' % fingerprint).get_contents_as_string()
-    return certificate_operations.get_cert_from_pem_string(contents)
+    key = bucket.get_key('certs/%s' % fingerprint)
+    if key is None:
+        return None
+    else:
+        return certificate_operations.get_cert_from_pem_string(
+            key.get_contents_as_string()
+        )
 
 
 def get_by_subject(subject):
