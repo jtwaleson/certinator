@@ -39,6 +39,13 @@ def _get_redis():
     return _redis
 
 
+def store_most_recently_added_certificates(cert):
+    redis = _get_redis()
+    pem = certificate_operations.get_pem_string_from_cert(cert)
+    redis.lpush('last-certificates', pem)
+    redis.ltrim('last-certificates', 0, 10)
+
+
 def store(cert):
     '''returns if certificate was actually added'''
 
@@ -69,6 +76,7 @@ def store(cert):
         'subjects/%s/%s' % (subject_hash, fingerprint)
     ).set_contents_from_string('')
     _get_redis().setex(fingerprint, '', 60 * 30)
+    store_most_recently_added_certificates(cert)
     return True
 
 
@@ -93,4 +101,21 @@ def was_domain_checked_recently(domain, port):
 
 
 def access_domain(domain, port):
-    return _get_redis().setex('%s:%d' % (domain, port), '', 60 * 10)
+    redis = _get_redis()
+    redis.lpush('last-domains', '%s:%d' % (domain, port))
+    redis.ltrim('last-domains', 0, 10)
+    return redis.setex('%s:%d' % (domain, port), '', 60 * 10)
+
+
+def get_last_scanned_domains():
+    return _get_redis().lrange('last-domains', 0, 10)
+
+
+def get_last_added_certificates():
+    return map(
+        certificate_operations.get_cert_from_pem_string,
+        _get_redis().lrange('last-certificates', 0, 10),
+    )
+
+def get_last_scanned_domains():
+    return _get_redis().lrange('last-domains', 0, 10)

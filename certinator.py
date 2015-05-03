@@ -18,13 +18,12 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    certs = warehouse.get_most_recent_certificates(5)
-
-    def generator(certs):
-        for cert in certs:
-            yield cert.digest('sha1') + '\n'
-
-    return Response(generator(certs))
+    def gen():
+        for domain in warehouse.get_last_scanned_domains():
+            yield domain.strip() + '\n'
+        for cert in warehouse.get_last_added_certificates():
+            yield certificate_operations.get_subject_string(cert) + '\n'
+    return Response(gen())
 
 
 @app.route('/check-domain/<domain>', methods=['POST'])
