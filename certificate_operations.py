@@ -40,7 +40,10 @@ def get_cert_from_pem_string(input_string):
 
 def get_certs_from_domain(domain, port):
     if warehouse.was_domain_checked_recently(domain, port):
-        raise Exception('domain was already scanned recently, try again later')
+        raise Exception(
+            'domain %s:%d was already scanned recently, try again later'
+            % (domain, port)
+        )
 
     process = subprocess.Popen([
         'timeout', '5',

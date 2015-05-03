@@ -6,13 +6,15 @@ import json
 
 import certificate_operations
 
+logging.getLogger('boto').setLevel(logging.WARNING)
+
 _bucket = None
 
 
 def _get_bucket():
     global _bucket
     if not _bucket:
-        logging.info('Connecting to database')
+        logging.info('connecting to database')
         connection = boto.connect_s3(
             aws_access_key_id=os.environ['S3_ACCESS_KEY_ID'],
             aws_secret_access_key=os.environ['S3_SECRET_ACCESS_KEY'],
@@ -27,7 +29,7 @@ _redis = None
 def _get_redis():
     global _redis
     if not _redis:
-        logging.info('Connecting to redis')
+        logging.info('connecting to redis')
         credentials = json.loads(
             os.environ['VCAP_SERVICES']
         )['rediscloud'][0]['credentials']
@@ -61,6 +63,7 @@ def store(cert):
         _get_redis().setex(fingerprint, '', 60 * 30)
         return False
 
+    logging.info('storing certificate %s' % fingerprint)
     certificate_key = bucket.new_key(
         'certs/%s' % fingerprint
     )
@@ -91,7 +94,6 @@ def get_by_subject(subject):
     subject_hash = subject.hash()
     bucket = _get_bucket()
 
-    print('getting list %s' % subject_hash)
     for key in bucket.list(prefix='subjects/%s' % subject_hash):
         yield get_by_fingerprint(key.name.split('/')[2])
 

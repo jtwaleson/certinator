@@ -33,7 +33,7 @@ def analyze_domain_name(domain, port=443):
         return ('Invalid hostname/port', 400)
     port = int(port)
 
-    logging.info('Fetching certificates from %s:%d' % (domain, port))
+    logging.info('fetching certificates from %s:%d' % (domain, port))
 
     added = 0
     try:
@@ -41,10 +41,14 @@ def analyze_domain_name(domain, port=443):
             if warehouse.store(cert):
                 added += 1
     except Exception as e:
-        logging.exception('Could not handle %s:%d' % (domain, port))
+        logging.warning('could not handle %s:%d' % (domain, port))
         return str(e), 500
 
-    return 'domain checked, thanks for submitting %d new certificates' % added
+    return (
+        'domain %s:%d checked, thanks for submitting %d new certificates' % (
+            domain, port, added
+        )
+    )
 
 
 def get_certificates_from_request(request):
