@@ -137,7 +137,7 @@ def get_chain():
     def response_generator(cert):
         previous_cert = None
         # we don't output the last cert from the chain, that is self-signed
-        for chain_cert in x509_util.get_certificate_chain(cert):
+        for chain_cert in cert.get_chain():
             if previous_cert:
                 yield previous_cert
             previous_cert = chain_cert.get_pem()
