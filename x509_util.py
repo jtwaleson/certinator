@@ -47,6 +47,33 @@ class X509Extra(crypto.X509):
     def is_self_signed(self):
         return self.is_signed_by(self)
 
+    def is_authority(self):
+        for i in range(self.get_extension_count()):
+            extension = self.get_extension(i)
+            if extension.get_short_name() == 'basicConstraints':
+                if str(extension).upper().startswith('CA:FALSE'):
+                    return False
+                if str(extension).upper().startswith('CA:TRUE'):
+                    return True
+
+        if self.get_fingerprint() in [
+            '97817950D81C9670CC34D809CF794431367EF474',
+            'CE6A64A309E42FBBD9851C453E6409EAE87D60F1',
+            '273EE12457FDC4F90C55E82B56167F62F532E547',
+            '204285DCF7EB764195578E136BD4B7D1E98E46A5',
+            'B3EAC44776C9C81CEAF29D95B6CCA0081B67EC9D',
+            '61EF43D77FCAD46151BC98E0C35912AF9FEB6311',
+            '742C3192E607E424EB4549542BE1BBC53E6174E2',
+            '85371CA6E550143DCE2803471BDE3A09E8F8770F',
+            '132D0D45534B6997CDB2D5C339E25576609B5CC6',
+            'C8EC8C879269CB4BAB39E98D7E5767F31495739D',
+            'A1DB6393916F17E4185509400415C70240B0AE6B',
+        ]:
+            # known old root certificates without x509v3 extension
+            return True
+        else:
+            return False
+
     def get_fingerprint(self):
         return self.digest('sha1').replace(':', '')
 
