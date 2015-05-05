@@ -189,6 +189,7 @@ def get_chain():
     if response_format == HTML:
         return 'html output not yet implemented, bye bye', 415
     elif response_format == JSON:
-        return jsonify([x.get_details() for x in cert.get_chain()])
+        chain = [x.get_details() for x in cert.get_chain()]
+        return jsonify({'chain': chain})
     else:
         return Response(response_generator(likely_certificate))
