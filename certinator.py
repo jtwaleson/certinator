@@ -1,7 +1,7 @@
 import sys
 import re
 import logging
-from flask import Flask, Response, request
+from flask import Flask, Response, request, render_template
 from util import is_valid_hostname_and_port
 import warehouse
 import x509_util
@@ -17,14 +17,47 @@ logging.basicConfig(
 app = Flask(__name__)
 
 
+TEXT = 'text'
+JSON = 'json'
+HTML = 'html'
+
+
+def json_html_text(request):
+    best = request.accept_mimetypes.best_match([
+        'text/plain',
+        'application/x-pem-file',
+        'text/html',
+        'application/json',
+        'application/xhtml+xml',
+        'application/xml',
+    ], default='*/*')
+    logging.info('best match is %s' % best)
+    if best in ('application/json',):
+        return JSON
+    elif best in (
+        'text/html',
+        'application/xml',
+        'application/xhtml+xml',
+    ):
+        return HTML
+    else:
+        return TEXT
+
+
 @app.route('/')
 def index():
-    def gen():
-        for domain in warehouse.get_last_scanned_domains():
-            yield domain.strip() + '\n'
-        for cert in warehouse.get_last_added_certificates():
-            yield cert.get_subject_string() + '\n'
-    return Response(gen())
+#    def gen():
+#        for domain in warehouse.get_last_scanned_domains():
+#            yield domain.strip() + '\n'
+#        for cert in warehouse.get_last_added_certificates():
+#            yield cert.get_subject_string() + '\n'
+    response_format = json_html_text(request)
+    if response_format == TEXT:
+        return 'welcome to the server'
+    elif response_format == HTML:
+        return render_template('index.html')
+    else:
+        return 'can not send data in this format', 415
 
 
 fingerprint_regex = re.compile('[A-F0-9]{40}')
@@ -36,10 +69,15 @@ def get_certificate(fingerprint):
     if not fingerprint_regex.match(fingerprint):
         return 'not a valid certificate fingerprint', 400
     cert = warehouse.get_by_fingerprint(fingerprint)
+    response_format = json_html_text(request)
     if cert is None:
         return 'not found', 404
-    else:
+    elif response_format == TEXT:
         return cert.get_pem()
+    elif response_format == HTML:
+        return render_template('certificate.html', certificate=cert)
+    else:
+        return 'can not send data in this format', 415
 
 
 @app.route('/signers/<fingerprint>')
@@ -139,7 +177,7 @@ def get_chain():
         # we don't output the last cert from the chain, that is self-signed
         for chain_cert in cert.get_chain():
             if previous_cert:
-                yield previous_cert
-            previous_cert = chain_cert.get_pem()
+                yield previous_cert.get_pem()
+            previous_cert = chain_cert
 
     return Response(response_generator(likely_certificate))

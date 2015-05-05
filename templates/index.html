@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Certificate Details{% endblock %}
+{% block content %}
+<div class='container'>
+    <div class='row'>
+        <h1>Certinator</h1>
+    </div>
+    <div class='row'>
+        <div class="col s4 feature">
+            <strong>Find chain</strong>
+            <p>Autocomplete your CRT with the correct intermediates and paste the certificates directly into your nginx/apache config</p>
+        </div>
+        <div class="col s4 feature">
+            <strong>Upload new intermediates</strong>
+            <p>If you're using a new intermediate we can't autocomplete yet, upload it here so we can do so in the future</p>
+        </div>
+        <div class="col s4 feature">
+            <strong>Scan a host</strong>
+            <p>See certificate details of a web server on the Internet</p>
+        </div>
+    </div>
+    <div class='row'>
+        <div class="col s4 feature">
+            <strong>API/Command Line</strong>
+            <p>Certinator is designed to be accessed via curl and web browsers, in that order</p>
+        </div>
+        <div class="col s4 feature">
+            <strong>How does it work?</strong>
+            <p>We scan the internet for certificate chains so we have almost every commonly used intermediate in our archives. From that we can easily construct the chain for you</p>
+        </div>
+        <div class="col s4 feature">
+            <strong>Archive</strong>
+            <p>We offer an archive of all collected certificates for research purposes. If you'd like a copy, please contact us.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
