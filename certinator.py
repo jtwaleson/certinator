@@ -1,7 +1,7 @@
 import sys
 import re
 import logging
-from flask import Flask, Response, request, render_template
+from flask import Flask, Response, request, render_template, jsonify
 from util import is_valid_hostname_and_port
 import warehouse
 import x509_util
@@ -77,7 +77,7 @@ def get_certificate(fingerprint):
     elif response_format == HTML:
         return render_template('certificate.html', certificate=cert)
     else:
-        return 'can not send data in this format', 415
+        return jsonify(cert.get_details())
 
 
 @app.route('/signers/<fingerprint>')

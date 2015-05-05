@@ -5,6 +5,13 @@ from Crypto.Util import asn1
 import warehouse
 
 
+def _get_cn_from_x509_name(x509_name):
+    for key, value in x509_name.get_components():
+        if key == 'CN':
+            return value
+    return None
+
+
 class X509Extra(crypto.X509):
 
     def get_pem(self):
@@ -30,6 +37,43 @@ class X509Extra(crypto.X509):
         except crypto.Error:
             return False
         return False
+
+    def get_details(self):
+        result = {
+            'issuer': _get_cn_from_x509_name(self.get_issuer()),
+            'not_after': self.get_notAfter(),
+            'not_before': self.get_notBefore(),
+            'key_size': self.get_pubkey().bits(),
+            'is_authority': self.is_authority(),
+            'serial': self.get_serial_number(),
+            'sha1': self.get_fingerprint('sha1'),
+            'sha256': self.get_fingerprint('sha256'),
+            'sha512': self.get_fingerprint('sha512'),
+            'signature_algorithm': self.get_signature_algorithm(),
+            'subject': _get_cn_from_x509_name(self.get_subject()),
+            'version': self.get_version(),
+            'pem': self.get_pem(),
+            'extensions': dict((
+                (e.get_short_name(), {
+                    'critical': e.get_critical() == 1,
+                    'value': str(e),
+                })
+                for e in (
+                    self.get_extension(i)
+                    for i in range(self.get_extension_count())
+                )
+            )),
+        }
+        try:
+            result['is_server_certificate'] = self.is_server_certificate()
+        except:
+            result['is_server_certificate'] = 'unknown'
+        try:
+            result['is_self_signed'] = self.is_self_signed()
+        except:
+            result['is_self_signed'] = 'unknown'
+
+        return result
 
     def get_subject_string(self):
         return ', '.join(
@@ -74,8 +118,11 @@ class X509Extra(crypto.X509):
         else:
             return False
 
-    def get_fingerprint(self):
-        return self.digest('sha1').replace(':', '')
+    def get_fingerprint(self, algorithm='sha1', strip_colons=True):
+        result = self.digest(algorithm)
+        if strip_colons:
+            result = result.replace(':', '')
+        return result
 
     def get_chain(self):
         next_in_line = self
