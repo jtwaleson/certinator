@@ -91,8 +91,13 @@ def get_signers(fingerprint):
     if cert.is_self_signed():
         return 'certificate is self-signed', 409
     signers = list(cert.get_signers())
+    response_format = json_html_text(request)
     if len(signers) == 0:
         return 'no signers found', 404
+    elif response_format == JSON:
+        return jsonify([x.get_details() for x in signers])
+    elif response_format == HTML:
+        return 'unable to output signers in html, stay tuned', 415
     else:
         return '\n'.join(x.get_fingerprint() for x in signers) + '\n'
 
@@ -180,4 +185,10 @@ def get_chain():
                 yield previous_cert.get_pem()
             previous_cert = chain_cert
 
-    return Response(response_generator(likely_certificate))
+    response_format = json_html_text(request)
+    if response_format == HTML:
+        return 'html output not yet implemented, bye bye', 415
+    elif response_format == JSON:
+        return jsonify([x.get_details() for x in cert.get_chain()])
+    else:
+        return Response(response_generator(likely_certificate))
