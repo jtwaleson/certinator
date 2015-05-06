@@ -1,5 +1,10 @@
 * make web interface
   * for index
+    * add icons to features
+    * add command line example
+  * for chain analyzer
+    * upload cert via upload button
+    * upload cert via pem text
   * for certificate viewer
     * should show details
     * should show chain(s)
