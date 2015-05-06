@@ -18,6 +18,8 @@ class X509Extra(crypto.X509):
         return crypto.dump_certificate(crypto.FILETYPE_PEM, self)
 
     def is_signed_by(self, other):
+        if self.get_issuer().hash() != other.get_subject().hash():
+            return False
         signature_algorithm = self.get_signature_algorithm()
         self_asn1 = crypto.dump_certificate(
             crypto.FILETYPE_ASN1, self
