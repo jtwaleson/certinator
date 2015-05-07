@@ -75,7 +75,7 @@ def get_certificate(fingerprint):
     elif response_format == TEXT:
         return cert.get_pem()
     elif response_format == HTML:
-        return render_template('certificate.html', certificate=cert)
+        return render_template('certificate.html', certificates=[cert])
     else:
         return jsonify(cert.get_details())
 
@@ -166,6 +166,11 @@ def upload_certificates():
     )
 
 
+@app.route('/chain/', methods=['GET'])
+def get_chain_page():
+    return render_template('upload.html')
+
+
 @app.route('/chain/', methods=['POST'])
 def get_chain():
     likely_certificate = None
@@ -187,7 +192,10 @@ def get_chain():
 
     response_format = json_html_text(request)
     if response_format == HTML:
-        return 'html output not yet implemented, bye bye', 415
+        return render_template(
+            'certificate.html',
+            certificates=cert.get_chain()
+        )
     elif response_format == JSON:
         chain = [x.get_details() for x in cert.get_chain()]
         return jsonify({'chain': chain})
