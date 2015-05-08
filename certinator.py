@@ -192,9 +192,10 @@ def get_chain():
 
     response_format = json_html_text(request)
     if response_format == HTML:
+        certs = list(cert.get_chain())
         return render_template(
             'certificate.html',
-            certificates=cert.get_chain()
+            certificates=certs,
         )
     elif response_format == JSON:
         chain = [x.get_details() for x in cert.get_chain()]

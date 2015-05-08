@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% macro page_title() -%}
-  {% if len(certificates) == 1 %}
+  {% if certificates|count == 1 %}
     Certificate Details
   {% else %}
     Chain Details

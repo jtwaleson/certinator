@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Chain analyzer{% endblock %}
+{% block content %}
+<div class='container'>
+    <div class='row'>
+        <h1>Chain Analyzer</h1>
+    </div>
+    <div class='row'>
+        <div class='col'>
+            <form action="/chain/" method="POST" enctype="multipart/form-data">
+                <div class="file-field input-field">
+                    <input class="file-path validate" type="text"/>
+                    <div class="btn">
+                        <span>File</span>
+                        <input name='certfile' type="file" />
+                    </div>
+                </div>
+                <div class="file-field input-field">
+                    <input type='submit' value='Process' class='btn'>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
