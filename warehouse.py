@@ -28,7 +28,7 @@ _redis = None
 
 def _get_redis():
     global _redis
-    if not _redis:
+    if not _redis and 'VCAP_SERVICES' in os.environ:
         logging.info('connecting to redis')
         credentials = json.loads(
             os.environ['VCAP_SERVICES']
@@ -43,8 +43,9 @@ def _get_redis():
 
 def store_most_recently_added_certificates(cert):
     redis = _get_redis()
-    redis.lpush('last-certificates', cert.get_pem())
-    redis.ltrim('last-certificates', 0, 10)
+    if redis:
+        redis.lpush('last-certificates', cert.get_pem())
+        redis.ltrim('last-certificates', 0, 10)
 
 
 def store(cert):
@@ -54,12 +55,13 @@ def store(cert):
     subject_hash = cert.subject_name_hash()
     pem = cert.get_pem()
 
-    if _get_redis().exists(fingerprint):
+    if _get_redis() and _get_redis().exists(fingerprint):
         return False
 
     bucket = _get_bucket()
     if bucket.get_key('certs/%s' % fingerprint):
-        _get_redis().setex(fingerprint, '', 60 * 30)
+        if _get_redis():
+            _get_redis().setex(fingerprint, '', 60 * 30)
         return False
 
     logging.info('storing certificate %s' % fingerprint)
@@ -77,7 +79,8 @@ def store(cert):
     bucket.new_key(
         'subjects/%s/%s' % (subject_hash, fingerprint)
     ).set_contents_from_string('')
-    _get_redis().setex(fingerprint, '', 60 * 30)
+    if _get_redis():
+        _get_redis().setex(fingerprint, '', 60 * 30)
     store_most_recently_added_certificates(cert)
     return True
 
@@ -103,21 +106,30 @@ def get_by_subject(subject):
 
 
 def was_domain_checked_recently(domain, port):
-    return _get_redis().exists('%s:%d' % (domain, port))
+    if _get_redis():
+        return _get_redis().exists('%s:%d' % (domain, port))
+    else:
+        return False
 
 
 def access_domain(domain, port):
     redis = _get_redis()
-    redis.lpush('last-domains', '%s:%d' % (domain, port))
-    redis.ltrim('last-domains', 0, 10)
-    return redis.setex('%s:%d' % (domain, port), '', 60 * 10)
+    if redis:
+        redis.lpush('last-domains', '%s:%d' % (domain, port))
+        redis.ltrim('last-domains', 0, 10)
+        redis.setex('%s:%d' % (domain, port), '', 60 * 10)
 
 
 def get_last_scanned_domains():
-    return _get_redis().lrange('last-domains', 0, 10)
+    if _get_redis():
+        return _get_redis().lrange('last-domains', 0, 10)
+    else:
+        return []
 
 
 def get_last_added_certificates():
+    if not _get_redis():
+        return []
     return map(
         x509_util.get_cert_from_pem_string,
         _get_redis().lrange('last-certificates', 0, 10),
