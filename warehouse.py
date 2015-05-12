@@ -15,11 +15,15 @@ def _get_bucket():
     global _bucket
     if not _bucket:
         logging.info('connecting to database')
-        connection = boto.connect_s3(
-            aws_access_key_id=os.environ['S3_ACCESS_KEY_ID'],
-            aws_secret_access_key=os.environ['S3_SECRET_ACCESS_KEY'],
-        )
-        _bucket = connection.get_bucket('all-certificates')
+        if'S3_ACCESS_KEY_ID' in os.environ:
+            connection = boto.connect_s3(
+                aws_access_key_id=os.environ['S3_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['S3_SECRET_ACCESS_KEY'],
+            )
+            _bucket = connection.get_bucket('all-certificates')
+        else:
+            import warehouse_s3_dev
+            _bucket = warehouse_s3_dev.LocalS3Bucket('store')
     return _bucket
 
 
