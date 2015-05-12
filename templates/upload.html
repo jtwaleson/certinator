@@ -5,21 +5,27 @@
     <div class='row'>
         <h1>Chain Analyzer</h1>
     </div>
-    <div class='row'>
-        <div class='col'>
-            <form action="/chain/" method="POST" enctype="multipart/form-data">
-                <div class="file-field input-field">
-                    <input class="file-path validate" type="text"/>
-                    <div class="btn">
-                        <span>File</span>
-                        <input name='certfile' type="file" />
-                    </div>
+    <form action='/chain/' method='POST' enctype='multipart/form-data'>
+        <div class='row'>
+            <div class='file-field input-field col'>
+                <input class='file-path validate' type='text'/>
+                <div class='btn'>
+                    <span>File</span>
+                    <input name='certfile' type='file' multiple/>
                 </div>
-                <div class="file-field input-field">
-                    <input type='submit' value='Process' class='btn'>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+        <div class='row'>
+            <div class='input-field col s12'>
+                <textarea id='textarea1' name='certtext' class='materialize-textarea'></textarea>
+                <label for='textarea1'>Textarea</label>
+            </div>
+        </div>
+        <div class='row'>
+            <div class='file-field input-field col'>
+                <input type='submit' value='Process' class='btn'>
+            </div>
+        </div>
+    </form>
 </div>
 {% endblock %}

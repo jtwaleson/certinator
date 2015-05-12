@@ -140,16 +140,20 @@ def get_certificates_from_request(request):
                 x509_util.get_cert_from_pem_string(pem_string),
             )
 
-    if files_count == 0:
-        files_count += 1
+    files_count += 1
+    if 'certtext' in request.form:
+        pem_strings = x509_util.get_pem_strings_from_lines(
+            request.form['certtext'].split('\n')
+        )
+    else:
         pem_strings = x509_util.get_pem_strings_from_lines(
             request.data.split('\n')
         )
-        for pem_string in pem_strings:
-            yield (
-                files_count,
-                x509_util.get_cert_from_pem_string(pem_string),
-            )
+    for pem_string in pem_strings:
+        yield (
+            files_count,
+            x509_util.get_cert_from_pem_string(pem_string),
+        )
 
 
 @app.route('/upload', methods=['POST'])
