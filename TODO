@@ -10,6 +10,8 @@
     * should show chain(s)
     * should show vulnerabilities in chain
     * should have command line example
+    * should show estimated price for the certificate
+  * should have a url analyzer, which redirects to the same choice page as the uploader
 * create CSR hinter
 * write decent README
 * create post handler for file upload (der)
