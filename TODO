@@ -1,14 +1,15 @@
+* use redis as a proper cache (store pem in there)
 * make web interface
   * for index
     * add icons to features
     * add command line example
-  * for chain analyzer
-    * upload cert via upload button
-    * upload cert via pem text
+  * for uploader
+    * should have overview of all found certificates
   * for certificate viewer
     * should show details
     * should show chain(s)
     * should show vulnerabilities in chain
+    * should have command line example
 * create CSR hinter
 * write decent README
 * create post handler for file upload (der)
