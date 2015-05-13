@@ -64,7 +64,10 @@ class X509Extra(crypto.X509):
             )),
         }
         try:
-            result['is_server_certificate'] = self.is_server_certificate()
+            result['is_server_certificate'] = (
+                'TLS Web Server Authentication' in
+                result['extensions']['extendedKeyUsage']['value']
+            )
         except:
             result['is_server_certificate'] = 'unknown'
         try:
