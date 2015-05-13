@@ -5,11 +5,8 @@ from Crypto.Util import asn1
 import warehouse
 
 
-def _get_cn_from_x509_name(x509_name):
-    for key, value in x509_name.get_components():
-        if key == 'CN':
-            return value
-    return None
+def get_name_details(x509_name):
+    return dict(x509_name.get_components())
 
 
 class X509Extra(crypto.X509):
@@ -42,7 +39,7 @@ class X509Extra(crypto.X509):
 
     def get_details(self):
         result = {
-            'issuer': _get_cn_from_x509_name(self.get_issuer()),
+            'issuer': get_name_details(self.get_issuer()),
             'not_after': self.get_notAfter(),
             'not_before': self.get_notBefore(),
             'key_size': self.get_pubkey().bits(),
@@ -52,7 +49,7 @@ class X509Extra(crypto.X509):
             'sha256': self.get_fingerprint('sha256'),
             'sha512': self.get_fingerprint('sha512'),
             'signature_algorithm': self.get_signature_algorithm(),
-            'subject': _get_cn_from_x509_name(self.get_subject()),
+            'subject': get_name_details(self.get_subject()),
             'version': self.get_version(),
             'pem': self.get_pem(),
             'extensions': dict((

@@ -16,11 +16,17 @@
     <div class='row cert server'>
         <div class='col'>
             {% for certificate in certificates %}
+            {% set details = certificate.get_details() %}
             <div class="card blue-grey darken-1">
                 <div class="card-content white-text">
-                    <span class="card-title">{{ certificate.get_subject_string() }}</span>
-                    <p><strong>fingerprint:</strong> {{ certificate.get_fingerprint() }}</p>
-                    <br/>
+                    <span class="card-title"><strong>CN:</strong> {{ details['subject']['CN'] }}</span>
+                    <p><strong>fingerprint:</strong> {{ details['sha1'] }}</p>
+                    <p><strong>key size:</strong> {{ details['key_size'] }}</p>
+                    <p><strong>signature algorithm:</strong> {{ details['signature_algorithm'] }}</p>
+                    <p><strong>serial:</strong> {{ details['serial'] }}</p>
+                    <p><strong>start date:</strong> {{ details['not_before'] }}</p>
+                    <p><strong>end date:</strong> {{ details['not_after'] }}</p>
+                    <p><strong>is CA:</strong> {{ 'Yes' if details['is_authority'] else 'No' }}</p>
                     <code class='pem'>
                         {{ certificate.get_pem().replace('\n', '<br/>') | safe }}
                     </code>
