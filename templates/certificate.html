@@ -20,7 +20,7 @@
             <div class="card blue-grey darken-1">
                 <div class="card-content white-text">
                     <span class="card-title"><strong>CN:</strong> {{ details['subject']['CN'] }}</span>
-                    <p><strong>fingerprint:</strong> {{ details['sha1'] }}</p>
+                    <p><strong>fingerprint:</strong> <a href='/certificate/{{ details['sha1'] }}'>{{ certificate.get_fingerprint(strip_colons=False) }}</a></p>
                     <p><strong>key size:</strong> {{ details['key_size'] }}</p>
                     <p><strong>signature algorithm:</strong> {{ details['signature_algorithm'] }}</p>
                     <p><strong>serial:</strong> {{ details['serial'] }}</p>
