@@ -13,6 +13,10 @@
     * should show estimated price for the certificate
   * should have a url analyzer, which redirects to the same choice page as the uploader
 * create CSR hinter
+* date/time parser for begin/end dates
+* have a database with overall stats that's updated nightly
+  * which certificates signed by this one
 * write decent README
+  * dynamically generate /about from the README
 * create post handler for file upload (der)
 * create post handler for file upload (zip)

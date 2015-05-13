@@ -1,7 +1,7 @@
 import sys
 import re
 import logging
-from flask import Flask, Response, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, redirect
 from util import is_valid_hostname_and_port
 import warehouse
 import x509_util
@@ -75,7 +75,16 @@ def get_certificate(fingerprint):
     elif response_format == TEXT:
         return cert.get_pem()
     elif response_format == HTML:
-        return render_template('certificate.html', certificates=[cert])
+        try:
+            chain = list(cert.get_chain())
+            return render_template('certificate.html', certificates=chain)
+        except:
+            return render_template(
+                'certificate.html', certificates=[cert],
+                warnings=[
+                    'Could not get certificate chain',
+                ],
+            )
     else:
         return jsonify(cert.get_details())
 
@@ -156,26 +165,12 @@ def get_certificates_from_request(request):
         )
 
 
-@app.route('/upload', methods=['POST'])
-def upload_certificates():
-    file_count = 0
-    cert_count = 0
-    for file_no, cert in get_certificates_from_request(request):
-        file_count = max(file_no, file_count)
-        if warehouse.store(cert):
-            cert_count += 1
-
-    return 'uploaded %d files, resulting in %d new certificates' % (
-        file_count, cert_count
-    )
-
-
-@app.route('/chain/', methods=['GET'])
+@app.route('/upload', methods=['GET'])
 def get_chain_page():
     return render_template('upload.html')
 
 
-@app.route('/chain/', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def get_chain():
     likely_certificate = None
     for file_no, cert in get_certificates_from_request(request):
@@ -186,23 +181,7 @@ def get_chain():
     if likely_certificate is None:
         return 'No certificates found in request', 400
 
-    def response_generator(cert):
-        previous_cert = None
-        # we don't output the last cert from the chain, that is self-signed
-        for chain_cert in cert.get_chain():
-            if previous_cert:
-                yield previous_cert.get_pem()
-            previous_cert = chain_cert
-
-    response_format = json_html_text(request)
-    if response_format == HTML:
-        certs = list(cert.get_chain())
-        return render_template(
-            'certificate.html',
-            certificates=certs,
-        )
-    elif response_format == JSON:
-        chain = [x.get_details() for x in cert.get_chain()]
-        return jsonify({'chain': chain})
-    else:
-        return Response(response_generator(likely_certificate))
+    return redirect(
+        '/certificate/%s?chain=true'
+         % likely_certificate.get_fingerprint()
+    )

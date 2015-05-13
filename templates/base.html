@@ -18,6 +18,21 @@
         <a href="https://github.com/jtwaleson/certinator"><img style="position: absolute; top: 0; right: 0; border: 0;" src="/static/forkme_right_green_007200.png" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
         </header>
         <main>
+        {% if warnings %}
+        <div class='container'>
+            {% for warning in warnings %}
+            <div class="row">
+                <div class="col s12 m6">
+                    <div class="card amber">
+                        <div class="card-content white-text">
+                            <p><strong>Warning:</strong> {{ warning }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% block content %}{% endblock %}
         </main>
         <footer class="page-footer">
