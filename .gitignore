@@ -1,3 +1,4 @@
 *.pyc
 venv
 store
+fast-checker-in-go

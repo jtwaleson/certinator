@@ -1,3 +1,7 @@
 venv
 .git
+*.pyc
 store
+fast-checker-in-go
+certs
+fileparts

@@ -174,9 +174,9 @@ def get_chain_page():
 def get_chain():
     likely_certificate = None
     for file_no, cert in get_certificates_from_request(request):
-        if not cert.is_self_signed():
+        warehouse.store(cert)
+        if likely_certificate is None and not cert.is_self_signed():
             likely_certificate = cert
-            break
 
     if likely_certificate is None:
         return 'No certificates found in request', 400
