@@ -63,6 +63,41 @@ def index():
 fingerprint_regex = re.compile('[A-F0-9]{40}')
 
 
+@app.route('/chain/', methods=['POST'])
+def get_chain_v2():
+    likely_certificate = None
+    for file_no, cert in get_certificates_from_request(request):
+        warehouse.store(cert)
+        if likely_certificate is None and not cert.is_self_signed():
+            likely_certificate = cert
+
+    cert = likely_certificate
+    response_format = json_html_text(request)
+
+    if cert is None:
+        return 'No certificates found in request', 400
+    elif response_format == TEXT:
+        try:
+            chain = cert.get_chain()
+            return '\n'.join([c.get_pem() for c in chain])
+        except:
+            return 'could not get chain for certificate', 500
+    elif response_format == HTML:
+        try:
+            chain = list(cert.get_chain())
+            return render_template('certificate.html', certificates=chain)
+        except:
+            return render_template(
+                'certificate.html', certificates=[cert],
+                warnings=[
+                    'Could not get certificate chain',
+                ],
+            )
+    else:
+        # TODO: return chain in json format
+        return jsonify(cert.get_details())
+
+
 @app.route('/certificate/<fingerprint>')
 def get_certificate(fingerprint):
     fingerprint = fingerprint.upper().replace(':', '')
